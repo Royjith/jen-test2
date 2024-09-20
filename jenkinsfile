@@ -27,7 +27,7 @@ pipeline {
             echo "Job on slave1 failed or was interrupted, retrying on slave2..."
 
             // Retry on slave2
-            build job: 'pipeline2', parameters: [string(name: 'AGENT', value: 'slave2')]
+            build job: 'pipeline3', parameters: [string(name: 'AGENT', value: 'slave2')]
         }
     }
 }
