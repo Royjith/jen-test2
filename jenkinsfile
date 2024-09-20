@@ -1,17 +1,33 @@
 pipeline {
-    agent none
+    agent any
 
     stages {
-        stage('Terraform') {
-            agent {
-                label 'slave1||slave2' // specify multiple slaves
+        stage('Init') {
+            agent { label 'slave1' }
+            options {
+                timeout(time: 30, unit: 'SECONDS') // Timeout after 30 seconds to prevent hanging
             }
             steps {
-                retry(3) { // retry up to 3 times if the job fails
-                    sh 'terraform init'
-                    sh 'terraform apply'
+                script {
+                    try {
+                        echo "Running Terraform init on slave1"
+                        // Initialize Terraform
+                        sh 'terraform init'
+                    } catch (Exception e) {
+                        echo "An error occurred on slave1: ${e}"
+                        error("Terminating stage due to error on slave1")
+                    }
                 }
             }
+        }
+    }
+    
+    post {
+        unsuccessful {
+            echo "Job on slave1 failed or was interrupted, retrying on slave2..."
+
+            // Retry on slave2
+            build job: 'pipeline2', parameters: [string(name: 'AGENT', value: 'slave2')]
         }
     }
 }
