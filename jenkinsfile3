@@ -1,0 +1,45 @@
+jenkinspipeline {
+    agent none  // No default agent
+
+    stages {
+        stage('Build') {
+            steps {
+                script {
+                    def agents = ['slave1', 'slave2', ] // List of available agents
+                    def success = false
+                    
+                    for (agent in agents) {
+                        try {
+                            echo "Trying agent: ${agent}"
+                            node(agent) {
+                                // Replace the following with your actual build steps
+                                sh 'echo Building on ${agent}'
+                                // Add more build commands here
+                                
+                                // Simulate a failure for testing
+                                // Uncomment the line below to test failure handling
+                                // error("Simulated failure for testing")
+                            }
+                            success = true
+                            break  // Exit loop if successful
+                        } catch (Exception e) {
+                            echo "Failed on agent: ${agent}. Error: ${e.message}"
+                            // Optionally log the error or take additional action
+                        }
+                    }
+                    
+                    if (!success) {
+                        error("All agent attempts failed.")
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo "The build has failed on all agents."
+            // Add notifications or other actions here
+        }
+    }
+}
