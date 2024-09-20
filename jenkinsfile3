@@ -5,7 +5,7 @@ jenkinspipeline {
         stage('Build') {
             steps {
                 script {
-                    def agents = ['slave1', 'slave2', ] // List of available agents
+                    def agents = ['node1', 'node2', ] // List of available agents
                     def success = false
                     
                     for (agent in agents) {
