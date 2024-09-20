@@ -1,0 +1,17 @@
+pipeline {
+    agent none
+
+    stages {
+        stage('Terraform') {
+            agent {
+                label 'slave1||slave2' // specify multiple slaves
+            }
+            steps {
+                retry(3) { // retry up to 3 times if the job fails
+                    sh 'terraform init'
+                    sh 'terraform apply'
+                }
+            }
+        }
+    }
+}
