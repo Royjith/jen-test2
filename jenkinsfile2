@@ -1,0 +1,45 @@
+pipeline {
+    agent none 
+    stages {
+        stage('Run on Slave 1') {
+            agent { label 'slave1' }
+            stages {
+                stage('Execute Job') {
+                    steps {
+                        script {
+                            try {
+                                // Place your job logic here
+                                echo 'Running job on Slave 1'
+                                // Simulate a potential failure for demonstration
+                                // sh 'exit 1' // Uncomment to simulate a failure
+                            } catch (Exception e) {
+                                echo "Failed on Slave 1: ${e.message}"
+                                echo 'Attempting to run on Slave 2...'
+                                currentBuild.rawBuild.getExecutor().interrupt(Result.SUCCESS)
+                                // Trigger the next stage on a different agent
+                                build job: env.JOB_NAME, parameters: [[$class: 'StringParameterValue', name: 'slave', value: 'slave2']], propagate: false
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        stage('Run on Slave 2') {
+            agent { label 'slave2' }
+            when {
+                expression { params.slave == 'slave2' }
+            }
+            stages {
+                stage('Execute Job on Slave 2') {
+                    steps {
+                        echo 'Running job on Slave 2'
+                        // Place your job logic here for Slave 2
+                    }
+                }
+            }
+        }
+    }
+    parameters {
+        string(name: 'slave', defaultValue: 'slave1', description: 'Slave to execute on')
+    }
+}
