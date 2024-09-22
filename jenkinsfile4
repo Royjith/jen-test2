@@ -3,21 +3,18 @@ pipeline {
 
     stages {
         stage('Terraform') {
-            agent {
-                label 'slave1||slave2'
-            }
-            steps {
-                sh 'terraform init'
-                sh 'terraform apply'
-            }
-            post {
-                paused {
-                    // if the job is paused, resume it on another agent
-                    def newAgent = env.NODE_NAME.equals('slave1') ? 'slave2' : 'slave1' // switch to the other agent
-                    def jobName = env.JOB_NAME
-                    def buildNumber = env.BUILD_NUMBER
-                    Jenkins.instance.getItem(jobName).getBuildByNumber(buildNumber).resume(new hudson.model.ParametersAction(new hudson.model.StringParameterValue('AGENT', newAgent)))
-                    println "Job paused on ${env.NODE_NAME}, resuming it on ${newAgent}"
+            node('slave1') {
+                try {
+                    sh 'terraform init'
+                    sh 'terraform apply'
+                } catch (e) {
+                    echo "Error on slave1, retrying on slave2"
+                    node('slave2') {
+                        retry(3) {
+                            sh 'terraform init'
+                            sh 'terraform apply'
+                        }
+                    }
                 }
             }
         }
