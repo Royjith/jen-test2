@@ -1,22 +1,41 @@
 pipeline {
-    agent none
-
+    agent none // Define no agent at the top level
     stages {
-        stage('Terraform') {
-            node('slave1') {
-                try {
-                    sh 'terraform init'
-                    sh 'terraform apply'
-                } catch (e) {
-                    echo "Error on slave1, retrying on slave2"
-                    node('slave2') {
-                        retry(3) {
-                            sh 'terraform init'
-                            sh 'terraform apply'
-                        }
+        stage('Run on Slave 1') {
+            agent { label 'slave1' } // Specify the first slave
+            steps {
+                script {
+                    // Attempt to run the job
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        // Your build steps go here
+                        echo 'Running on Slave 1...'
+                        // Simulating a failure
+                        error 'Simulated failure on Slave 1'
+                    }
+                }
+            }
+        }
+        stage('Run on Slave 2') {
+            agent { label 'slave2' } // Specify the second slave
+            steps {
+                script {
+                    // Check if the previous stage failed
+                    if (currentBuild.result == 'FAILURE') {
+                        echo 'Resuming on Slave 2...'
+                        // Your build steps go here
+                        // Example: sh 'some-command'
+                        echo 'Running on Slave 2...'
+                    } else {
+                        echo 'No need to resume, job succeeded on Slave 1.'
                     }
                 }
             }
         }
     }
+    post {
+        always {
+            echo 'Pipeline completed.'
+        }
+    }
 }
+
