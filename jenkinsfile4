@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Terraform') {
             agent {
-                label 'terraform-slave1||terraform-slave2'
+                label 'slave1||slave2'
             }
             steps {
                 sh 'terraform init'
@@ -13,7 +13,7 @@ pipeline {
             post {
                 paused {
                     // if the job is paused, resume it on another agent
-                    def newAgent = 'terraform-slave2' // specify the new agent
+                    def newAgent = env.NODE_NAME.equals('slave1') ? 'slave2' : 'slave1' // switch to the other agent
                     def jobName = env.JOB_NAME
                     def buildNumber = env.BUILD_NUMBER
                     Jenkins.instance.getItem(jobName).getBuildByNumber(buildNumber).resume(new hudson.model.ParametersAction(new hudson.model.StringParameterValue('AGENT', newAgent)))
