@@ -15,22 +15,6 @@ pipeline {
                 }
             }
         }
-        stage('Run on Slave 2') {
-            agent { label 'slave2' } // Specify the second slave
-            steps {
-                script {
-                    // Check if the previous stage failed
-                    if (currentBuild.result == 'FAILURE') {
-                        echo 'Resuming on Slave 2...'
-                        // Your build steps go here
-                        // Example: sh 'some-command'
-                        echo 'Running on Slave 2...'
-                    } else {
-                        echo 'No need to resume, job succeeded on Slave 1.'
-                    }
-                }
-            }
-        }
     }
     post {
         always {
