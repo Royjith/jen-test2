@@ -1,0 +1,43 @@
+pipeline {
+    agent none // No default agent
+    stages {
+        stage('Run on Slave 1') {
+            agent { label 'slave1' } // First slave
+            steps {
+                script {
+                    try {
+                        echo 'Running on Slave 1...'
+                        // Simulating a task that might get stuck
+                        sleep time: 30, unit: 'SECONDS' // Simulates a long-running task
+                        // Optionally throw an error to simulate a failure
+                        // error 'Simulated failure on Slave 1'
+                    } catch (Exception e) {
+                        echo 'Caught exception on Slave 1. Rerouting to Slave 2...'
+                        currentBuild.result = 'UNSTABLE' // Mark as unstable
+                        throw e // Re-throw the exception to allow for rerouting
+                    }
+                }
+            }
+        }
+        stage('Run on Slave 2') {
+            agent { label 'slave2' } // Second slave
+            steps {
+                script {
+                    if (currentBuild.result == 'UNSTABLE') {
+                        echo 'Resuming on Slave 2...'
+                        // Replace with actual build steps
+                        echo 'Running tasks on Slave 2...'
+                        sleep time: 10, unit: 'SECONDS' // Simulate a different task
+                    } else {
+                        echo 'No need to reroute, job succeeded on Slave 1.'
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            echo 'Pipeline completed.'
+        }
+    }
+}
